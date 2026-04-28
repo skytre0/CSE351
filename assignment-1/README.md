@@ -51,6 +51,3 @@ Example (Encrypting a file):
 ## Environment
 - This project is developed for a Linux/Ubuntu environment.
 - Using Docker is recommended as specified in `docs/컴네 assignment 1.txt`.
-
----
-*Author: SeongJi Yang (20211181)*

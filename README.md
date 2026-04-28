@@ -27,4 +27,3 @@ Each assignment folder is organized as follows:
 - `report/`: Final reports in PDF/DOCX format.
 - `docs/`: Assignment instructions and reference documents.
 - `zip/`: Original submission files and templates.
-

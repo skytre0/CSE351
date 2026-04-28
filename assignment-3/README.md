@@ -38,6 +38,3 @@ After building, you can test the protocol using the provided server and client b
 
 ## Debugging
 Packet logging can be enabled by setting `LOG_PACKET` to `TRUE` in the `stcp_api.c` file within the framework.
-
----
-*Author: SeongJi Yang (20211181)*

@@ -46,6 +46,3 @@ Host: www.google.com
 ## Environment
 - This project is designed to run in a Linux environment.
 - Docker configuration details can be found in `docs/컴네 assignment 2.txt`.
-
----
-*Author: SeongJi Yang (20211181)*
