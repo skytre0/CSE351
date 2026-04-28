@@ -1,4 +1,4 @@
-# Computer Network Assignments
+# Computer Networks
 
 This repository contains four assignments for the Computer Network course at UNIST.
 
@@ -28,5 +28,3 @@ Each assignment folder is organized as follows:
 - `docs/`: Assignment instructions and reference documents.
 - `zip/`: Original submission files and templates.
 
----
-*Author: SeongJi Yang (20211181)*
