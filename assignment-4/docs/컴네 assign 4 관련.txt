@@ -1,0 +1,206 @@
++) 나중에 과제 끝나면
+ssh-keygen -R [127.0.0.1]:2222
+이걸로 연결 삭제 예정.
+
+작동 불량 (마우스 안 됨) 으로 인한 세팅 변경
+- cse351 설정 -> 네트워크 -> 포트 포워딩 (이미 2222, 22) 설정 되어 있음- VM 시작 -> 로그인 화면 뜨면 대기 (로그인 X) -> 내 cmd 실행
+ssh -p 2222 cse351@127.0.0.1
+입력 (내 cmd 3개에 다)
+
+----------- 초기 설정 -----------
+- 1번 창 : 로그가 뜨다가 멈추면 다음.
+cd ~/cse351_sr
+./run_pox.sh
+
+- 2번 창 : 1234 입력하고, mininet> 이 뜨면 다음.
+cd ~/cse351_sr
+sudo ./run_mininet.sh
+
+- 3번 창 : 여기서 코딩 예정.
+cd ~/cse351_sr/router
++) 검증 용은 ~/cse351에서 ./sr_solution_x86 하고, 작업 시 방법으로 확인 (ping 3개)
+
+----------- 작업 시 -----------
+
+- 3번 창 : 여기에 작업 가정 (.c 파일 이름 변경 가능).
+nano sr_router.c
+저장 : ctrl + o -> enter 로 저장 -> ctrl + x 로 나감.
+make
+./sr
++) make 안 되면 : make dist-clean; make
+
+- 2번 창 : 다음 입력해서 성공 메시지 확인 (실패 시 ctrl + c 로 종료)
+client1 ping -c 3 192.168.2.2
++) 추가 test용
+client1 traceroute -n 192.168.2.2
+client1 wget -O - http://192.168.2.2
+
+----------- 작업 종료 -----------
+
+- 3번 창 : ctrl + c로 종료 -> exit으로 연결 차단.
+
+- 2번 창 : mininet> 보이는 상태에서 exit, 안 될 경우 하단 입력 후 exit
+~/cse351_sr/killall.sh
+
+- 1번 창 : 3번 창과 동일.
+
+- VM 가서 우측 상단 X -> 시스템 종료 신호 보내기.
+
+
+
+----------- vs code 사용 -----------
+ctrl + shift + p -> connect to host 입력 -> cse351@127.0.0.1:2222 -> 1234 
+왼쪽 파일 2개 겹쳐진 모양에서 open folder -> /home/cse351/cse351_sr 입력 -> 1234
+상단 점 3개 -> terminal -> new terminal -> 생성된 terminal창 오른쪽 + 눌러서 terminal 3개 생성.
+
+- 1번 창 : 
+./run_pox.sh
+
+- 2번 창 : 1234 입력 후 대기.
+sudo ./run_mininet.sh
+
+- 3번 창 : 검증 방식 동일.
+cd router
+
+----------- 작업 시 -----------
+
+- 3번 창 : router 폴더 안에서 = 여기에 작업 가정
+저장 : ctrl + s
+make
+./sr
++) make 안 되면 : make dist-clean; make
+
+- 2번 창 : 다음 입력해서 성공 메시지 확인 (실패 시 ctrl + c 로 종료)
+client1 ping -c 3 192.168.2.2
+
+----------- 작업 종료 -----------
+
+- 3번 창 : ctrl + c로 종료 -> exit으로 연결 차단.
+
+- 2번 창 : mininet> 보이는 상태에서 exit, 안 될 경우 하단 입력 후 exit
+~/cse351_sr/killall.sh
+
+- 1번 창 : 3번 창과 동일.
+
+- ctrl + shift + p -> close remote connection 클릭.
+
+- VM 가서 우측 상단 X -> 시스템 종료 신호 보내기.
+
+------------------------------------------------------------------
+
+VM 직접 사용 시 : 
+- host 키 = Ctrl + shift 키.
+- 코딩 작업 후 종료 : 우측 상단 X 클릭 -> 시스템 종료 신호 보내기.
+
+실행 방법 : cse351 파일 열고 시작
+cse351
+1234
+- 필요 시 크기 조정 -
+cd ~/cse351_sr
+./run_pox.sh
+
+cd ~/cse351_sr
+./run_mininet.sh
+
+cd ~/cse351_sr
+./sr_solution_x86.sh
+
+mininet> client1 ping -c 3 192.168.2.2
++) 4번 terminal 새로 만들어서 
+sudo bash test_sr.sh
+
+
+---
+
+### 1. 기본 IP Forwarding & Routing (성공 케이스)
+기본적인 라우팅 테이블(LPM) 조회와 패킷 전달이 되는지 확인합니다.
+
+* **Client1 → Server2 통신**
+    * 명령어: `client1 ping -c 3 172.64.3.10`
+    * **기대 결과:** Ping 성공 (0% packet loss). [cite_start]`Server1`뿐만 아니라 다른 서브넷인 `Server2`로도 라우팅이 잘 되는지 검증. [cite: 18, 19, 56]
+* **Client1 → Client2 통신**
+    * 명령어: `client1 ping -c 3 10.0.2.100`
+    * **기대 결과:** **실패 (Timeout/Blocked)**.
+    * **이유:** Client2(10.0.2.100)는 Blacklist(10.0.2.0/24) 대역에 포함되므로, 방화벽 기능에 의해 차단되어야 합니다. (아래 5번 항목 참조) [cite_start][cite: 258, 259]
+
+### 2. ICMP Echo Reply (Router Interface Ping)
+라우터가 자신에게 온 패킷을 포워딩하지 않고 직접 응답하는지 확인합니다.
+
+* **Router Interface(eth1) Ping**
+    * 명령어: `client1 ping -c 3 10.0.1.1`
+    * **기대 결과:** Ping 성공. `ttl` 값은 `64`(또는 INIT_TTL)여야 합니다.
+    * [cite_start]**검증 내용:** `icmp_type`이 8(Request)일 때 0(Reply)으로 변환하여 응답하는지 확인. [cite: 75, 76]
+
+### 3. ICMP Destination Net Unreachable (Type 3, Code 0)
+라우팅 테이블에 없는 목적지로 패킷을 보낼 때 오류를 반환하는지 확인합니다.
+
+* **Routing Table Miss**
+    * 명령어: `client1 ping -c 3 8.8.8.8`
+    * **기대 결과:** `Destination Net Unreachable` 메시지 수신.
+    * [cite_start]**검증 내용:** 8.8.8.8은 제공된 `rtable`에 없으므로 LPM 매칭 실패 후 ICMP 에러를 보내야 합니다. [cite: 78, 79]
+
+### 4. ICMP Host Unreachable (Type 3, Code 1) - ARP Failure
+라우팅은 되지만(서브넷 일치), 해당 IP를 가진 호스트가 없을 때(ARP 응답 없음) 처리를 확인합니다.
+
+* **ARP 5회 실패 테스트**
+    * 명령어: `client1 ping -c 1 192.168.2.50`
+    * **설명:** `192.168.2.x` 대역은 `rtable`에 있지만, `.50`이라는 호스트는 Mininet에 생성되지 않았습니다.
+    * **기대 결과:** 약 5초 이상(ARP 5회 재시도) 지연 후 `Destination Host Unreachable` 수신.
+    * [cite_start]**검증 내용:** ARP Request를 5번 보내고 포기할 때 ICMP 에러를 생성하는지 확인. [cite: 80, 81]
+
+### 5. Firewall / Blacklist (IP 차단)
+특정 대역(`10.0.2.0/24`)을 차단하는지 확인합니다. `ip_black_list` 함수 검증입니다.
+
+* **Inbound Block (Source가 Blacklist)**
+    * 명령어: `client2 ping -c 3 server1`
+    * **기대 결과:** Ping 실패 (100% loss).
+    * [cite_start]**라우터 출력 확인:** 라우터 터미널에 `[IP blocked] : 10.0.2.100` 메시지가 출력되어야 함. [cite: 260]
+
+* **Outbound Block (Destination이 Blacklist)**
+    * 명령어: `server1 ping -c 3 client2`
+    * **기대 결과:** Ping 실패.
+    * [cite_start]**라우터 출력 확인:** 라우터 터미널에 `[IP blocked] : 10.0.2.100` 메시지가 출력되어야 함. [cite: 259]
+
+### 6. ICMP Time Exceeded (Type 11, Code 0) - TTL
+패킷이 라우터를 거칠 때 TTL이 감소하고, 0이 되면 폐기되는지 확인합니다.
+
+* **Traceroute 테스트**
+    * 명령어: `client1 traceroute -n 192.168.2.2`
+    * **기대 결과:** 경로상의 첫 번째 홉(Hop)으로 라우터의 IP(`10.0.1.1`)가 표시되어야 합니다.
+    * [cite_start]**검증 내용:** TTL이 1인 패킷을 받았을 때 `Time Exceeded` 메시지를 보내는지 확인. [cite: 85, 86]
+
+### 7. ICMP Port Unreachable (Type 3, Code 3)
+라우터의 인터페이스로 TCP/UDP 패킷을 보낼 때 처리를 확인합니다.
+
+* **Router Interface로 Traceroute**
+    * 명령어: `client1 traceroute -n 10.0.1.1`
+    * **기대 결과:** `!X` 또는 `!P`와 같은 표시와 함께 완료되거나, 마지막 홉에서 응답이 있어야 함.
+    * **대안 (wget):** `client1 wget http://10.0.1.1` (연결 거부 혹은 Port Unreachable 발생).
+    * [cite_start]**검증 내용:** 라우터 자신에게 온 패킷이 UDP/TCP payload를 가질 경우 `Port Unreachable`을 보내는지 확인. [cite: 82, 83]
+
+---
+
+### 요약: 테스트 체크리스트
+
+| 테스트 항목 | Mininet 명령어 | 예상 결과 | 관련 기능 |
+| :--- | :--- | :--- | :--- |
+| **IP Forwarding** | `client1 ping server2` | Ping 성공 | Routing Logic |
+| **Echo Reply** | `client1 ping 10.0.1.1` | Ping 성공 | ICMP Type 0 |
+| **Net Unreachable** | `client1 ping 8.8.8.8` | Dest Net Unreachable | Routing Miss |
+| **Host Unreachable**| `client1 ping 192.168.2.50` | Dest Host Unreachable | ARP Timeout |
+| **Firewall** | `client2 ping server1` | Ping 실패 & 로그 출력 | `ip_black_list` |
+| **Time Exceeded** | `client1 traceroute server1` | 경로에 10.0.1.1 표시 | TTL Check |
+| **Port Unreachable**| `client1 traceroute 10.0.1.1` | 도달 확인 (!X 등) | ICMP Type 3 Code 3 |
+
+
+
+
+
+---------------------------------------
+
+
+
+
+
+
+
